@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(rtp_decypher LANGUAGES CXX)
+project(rtp_decypher VERSION 0.3 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,8 +20,8 @@ link_directories(
     C:/msys64/mingw64/lib
 )
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets)
 
 add_library(rtp_decypher_lib STATIC
   fileutils.cpp
@@ -46,9 +46,11 @@ add_executable(rtp_decypher
   pcapreader.h pcapreader.cpp
   streamanalyzer.h streamanalyzer.cpp
   rtpparser.h rtpparser.cpp
+  mainwindow.h mainwindow.cpp mainwindow.ui
 )
 target_link_libraries(rtp_decypher
   Qt${QT_VERSION_MAJOR}::Core
+  Qt${QT_VERSION_MAJOR}::Widgets
   rtp_decypher_lib
 )
 
