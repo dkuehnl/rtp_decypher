@@ -1,4 +1,5 @@
 #include "streamanalyzer.h"
+#include <qdebug.h>
 
 StreamAnalyzer::StreamAnalyzer(const std::vector<PacketInfo>& stream)
     : m_stream(stream)
@@ -48,13 +49,12 @@ SequenceStat StreamAnalyzer::analyse_sequence(uint32_t ssrc) {
             uint16_t forward_diff = (current_seq - prev_seq) & 0xFFFF;
             uint16_t backward_diff = (prev_seq - current_seq) & 0xFFFF;
 
-            if (backward_diff > 0x8000 && (0xFFFF - prev_seq) < 1000){
+            if (current_seq < prev_seq){
                 stat.rollover++;
-                prev_seq = current_seq;
-                continue;
+            } else if ((current_seq - prev_seq) > 1) {
+                stat.seq_break = true;
             }
 
-            if ((current_seq - prev_seq) > 1) stat.seq_break = true;
             prev_seq = current_seq;
         }
 
@@ -68,3 +68,12 @@ SequenceStat StreamAnalyzer::analyse_sequence(uint32_t ssrc) {
 
     return stat;
 }
+
+std::vector<RtpLayer> StreamAnalyzer::get_rtp_stream(uint32_t ssrc) {
+    auto key = m_rtp_stream.find(ssrc);
+    if (key != m_rtp_stream.end() && !key->second.empty()) {
+        return key->second;
+    }
+    return {};
+}
+

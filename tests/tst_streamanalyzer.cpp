@@ -83,6 +83,8 @@ private slots:
     void test_get_rtp_codecs();
     void test_get_rtp_ssrcs();
     void test_check_sequence();
+    void test_check_brocken_sequence();
+    void test_rollover();
 };
 
 void TestStreamAnalyzer::test_get_rtp_codecs() {
@@ -118,6 +120,37 @@ void TestStreamAnalyzer::test_check_sequence() {
     QCOMPARE(stat.actual_pkt, 50);
     QCOMPARE(stat.rollover, 0);
     QCOMPARE(stat.seq_break, false);
+}
+
+void TestStreamAnalyzer::test_check_brocken_sequence() {
+    auto stream = make_dummy_rtp_stream(70, 0xDEADBEEF, 1, 0);
+
+    size_t drop_start = 23;
+    size_t drop_count = 10;
+    stream.erase(
+        stream.begin() + drop_start,
+        stream.begin() + drop_start + drop_count);
+
+    QCOMPARE(stream.size(), 60);
+
+    StreamAnalyzer sa(stream);
+
+    SequenceStat stat = sa.analyse_sequence(0xDEADBEEF);
+    QCOMPARE(stat.rollover, 0);
+    QCOMPARE(stat.seq_break, true);
+    QCOMPARE(stat.expected_pkt, 70);
+    QCOMPARE(stat.actual_pkt, 60);
+}
+
+void TestStreamAnalyzer::test_rollover() {
+    auto stream = make_dummy_rtp_stream(30, 0xDEADBEEF, 1, 65530);
+    StreamAnalyzer sa(stream);
+
+    SequenceStat stat = sa.analyse_sequence(0xDEADBEEF);
+    QCOMPARE(stat.rollover, 1);
+    QCOMPARE(stat.seq_break, false);
+    QCOMPARE(stat.expected_pkt, 30);
+    QCOMPARE(stat.actual_pkt, 30);
 }
 
 QTEST_APPLESS_MAIN(TestStreamAnalyzer)

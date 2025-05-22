@@ -22,6 +22,8 @@ public:
     QList<uint32_t> get_ssrcs();
     SequenceStat analyse_sequence(uint32_t ssrc);
 
+    std::vector<RtpLayer> get_rtp_stream(uint32_t ssrc);
+
 private:
     std::vector<PacketInfo> m_stream;
     std::map<uint32_t, std::vector<RtpLayer>> m_rtp_stream;
