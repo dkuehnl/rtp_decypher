@@ -1,8 +1,11 @@
 #ifndef FILEUTILS_H
 #define FILEUTILS_H
 
+#include <QTreeView>
+
 namespace FileUtils {
-int add_numbers(int a, int b);
+
+void initialize_fileview(QTreeView* tree_view);
 
 }
 

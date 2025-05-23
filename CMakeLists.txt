@@ -32,6 +32,7 @@ add_library(rtp_decypher_lib STATIC
 
 target_link_libraries(rtp_decypher_lib
   Qt${QT_VERSION_MAJOR}::Core
+  Qt${QT_VERSION_MAJOR}::Widgets
   Pcap++
   Packet++
   Common++
