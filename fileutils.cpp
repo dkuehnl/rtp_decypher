@@ -21,3 +21,21 @@ void FileUtils::initialize_fileview(QTreeView* tree_view) {
     tree_view->hideColumn(3);
 
 }
+
+QString FileUtils::get_filepath(QTreeView* tree_view, const QModelIndex& index) {
+    QFileSystemModel* filesystem = qobject_cast<QFileSystemModel*>(tree_view->model());
+    QString filepath = filesystem->filePath(index);
+    QFileInfo file(filepath);
+
+    if (file.isDir()) {
+        return "dir";
+    }
+
+    if (file.isFile()) {
+        if (filepath.endsWith(".pcap")) {
+            return filepath;
+        }
+    }
+
+    return "";
+}

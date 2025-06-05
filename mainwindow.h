@@ -1,6 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "pcapreader.h"
+#include "streamanalyzer.h"
+
 #include <QMainWindow>
 
 namespace Ui {
@@ -17,6 +20,16 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QString m_selected_file;
+    std::unique_ptr<PcapReader> m_pcap_reader;
+    std::unique_ptr<StreamAnalyzer> m_stream_analyzer;
+
+    void fileview_doubleclicked(const QModelIndex& index);
+    void connection_doubleClick(const QModelIndex& index);
+    Flow_Endpoints find_selected_connection(const QModelIndex& index);
+
+    void display_parsed_rtp_streams();
+    void display_pcap();
 
 private slots:
     void on_btn_analyse_clicked();

@@ -7,18 +7,29 @@ StreamAnalyzer::StreamAnalyzer(const std::vector<PacketInfo>& stream)
     if(m_stream.empty()) {
         return;
     }
+    qDebug() << "Stream im Constructo: " << m_stream.size();
     StreamAnalyzer::parse_stream();
 }
 
 void StreamAnalyzer::parse_stream() {
     for (const auto& element : m_stream) {
-        RtpLayer packet = RtpParser::parse_rtp(element.payload, element.payload_size, m_offset);
+
+        QString hexDump;
+        for (size_t i = 0; i < element.payload_size; ++i) {
+            // Byte in zwei Hex-Ziffern umwandeln und immer groß-schreiben, z. B. "0A", "FF" usw.
+            hexDump += QString("%1 ").arg(element.payload[i], 2, 16, QLatin1Char('0')).toUpper();
+        }
+        qDebug() << hexDump;
+
+        qDebug() << "Payload-Size: " << element.payload_size;
+        RtpLayer packet = RtpParser::parse_rtp(element.payload.data(), element.payload_size, m_offset);
         if (packet.version != 2) {
             continue;
         }
         m_rtp_stream[packet.ssrc].push_back(packet);
         m_codecs.append(packet.payload_type);
     }
+    qDebug() << "Size of m_rtp_stream: " << m_rtp_stream.size();
 }
 
 const QList<uint8_t>& StreamAnalyzer::get_codecs() {

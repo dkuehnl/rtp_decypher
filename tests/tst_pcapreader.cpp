@@ -14,6 +14,7 @@ private slots:
     void test_packet_struct();
     void test_get_endpoints();
     void test_get_stream();
+    void test_get_pkt_count_per_stream();
 };
 
 void TestPcapReader::test_valid_file() {
@@ -66,10 +67,10 @@ void TestPcapReader::test_packet_struct() {
 
     QCOMPARE(streams.size(), size_t(4));
 
-    Endpoint epA{"93.215.253.146", 43722};
-    Endpoint epB{"93.215.253.146", 43723};
-    Endpoint epC{"217.0.173.15", 61414};
-    Endpoint epD{"217.0.173.15", 61415};
+    Flow_Endpoints epA{"93.215.253.146", 43722};
+    Flow_Endpoints epB{"93.215.253.146", 43723};
+    Flow_Endpoints epC{"217.0.173.15", 61414};
+    Flow_Endpoints epD{"217.0.173.15", 61415};
 
     QVERIFY(streams.find(epA) != streams.end());
     QVERIFY(streams.find(epB) != streams.end());
@@ -89,18 +90,18 @@ void TestPcapReader::test_get_endpoints() {
     PcapReader reader(file);
     QVERIFY(reader.is_valid());
 
-    std::vector<Endpoint> expect = {
-        {"93.215.253.146", 43722},
+    std::vector<Flow_Endpoints> expect = {
+        {"93.215.253.146", 43722, "217.0.173.15", 61414},
         {"93.215.253.146", 43723},
         {"217.0.173.15", 61414},
         {"217.0.173.15", 61415}
     };
-    const std::vector<Endpoint>& actual = reader.show_sockets();
+    const std::vector<Flow_Endpoints>& actual = reader.get_flow_endpoints();
 
     for (auto const& ep : expect) {
         auto element = std::find_if(
             actual.begin(), actual.end(),
-            [&](Endpoint const& a) {
+            [&](Flow_Endpoints const& a) {
                 return a.source_ip == ep.source_ip
                        && a.source_port == ep.source_port;
             });
@@ -117,8 +118,19 @@ void TestPcapReader::test_get_stream() {
     PcapReader reader(file);
     QVERIFY(reader.is_valid());
 
-    const auto& stream = reader.get_stream("93.215.253.146", 43722);
+    Flow_Endpoints ep = {"93.215.253.146", 43722, "217.0.173.15", 61414};
+    const auto& stream = reader.get_stream(ep);
     QCOMPARE(stream.size(), 1100);
+}
+
+void TestPcapReader::test_get_pkt_count_per_stream() {
+    QString file = QFINDTESTDATA("data/testfile.pcap");
+    QVERIFY(QFile::exists(file));
+
+    PcapReader reader(file);
+    QVERIFY(reader.is_valid());
+
+    QCOMPARE(reader.get_pkt_count("93.215.253.146", 43722, "217.0.173.15", 61414), 1100);
 }
 
 QTEST_APPLESS_MAIN(TestPcapReader)

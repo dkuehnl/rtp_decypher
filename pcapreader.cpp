@@ -45,19 +45,20 @@ void PcapReader::extract_udp_streams() {
         }
 
         m_total_udp_count++;
-        Endpoint ep {
+        Flow_Endpoints ep {
             ip_packet->getSrcIPv4Address().toString(),
-            udp_packet->getSrcPort()
+            udp_packet->getSrcPort(),
+            ip_packet->getDstIPv4Address().toString(),
+            udp_packet->getDstPort(),
         };
 
-        PacketInfo packet {
-            ip_packet->getSrcIPv4Address().toString(),
-            ip_packet->getDstIPv4Address().toString(),
-            udp_packet->getSrcPort(),
-            udp_packet->getDstPort(),
-            udp_packet->getLayerPayloadSize(),
-            udp_packet->getLayerPayload()
-        };
+        PacketInfo packet;
+        packet.source_ip = ip_packet->getSrcIPv4Address().toString();
+        packet.destination_ip = ip_packet->getDstIPv4Address().toString();
+        packet.source_port = udp_packet->getSrcPort();
+        packet.destination_port = udp_packet->getDstPort();
+        packet.payload_size = udp_packet->getLayerPayloadSize();
+        packet.payload = std::vector<uint8_t>(udp_packet->getLayerPayload(), udp_packet->getLayerPayload() + udp_packet->getLayerPayloadSize());
 
         auto &vector = m_packets_per_source[ep];
         vector.push_back(packet);
@@ -65,24 +66,33 @@ void PcapReader::extract_udp_streams() {
 
 }
 
-const std::unordered_map<Endpoint, std::vector<PacketInfo>>& PcapReader::get_packets_per_source() const {
+const std::unordered_map<Flow_Endpoints, std::vector<PacketInfo>>& PcapReader::get_packets_per_source() const {
     return m_packets_per_source;
 }
 
-std::vector<Endpoint> PcapReader::show_sockets() {
-    std::vector<Endpoint> endpoints;
+std::vector<Flow_Endpoints> PcapReader::get_flow_endpoints() {
+    std::vector<Flow_Endpoints> endpoints;
     for (const auto& elements : m_packets_per_source) {
         endpoints.push_back(elements.first);
     }
     return endpoints;
 }
 
-const std::vector<PacketInfo>& PcapReader::get_stream(const std::string& source_ip, uint16_t source_port) const {
+const std::vector<PacketInfo>& PcapReader::get_stream(const Flow_Endpoints& ep) const {
     static const std::vector<PacketInfo> empty{};
-    Endpoint ep = {source_ip, source_port};
     auto element = m_packets_per_source.find(ep);
+
     return (element != m_packets_per_source.end())
         ? element->second
         : empty;
+}
+
+uint16_t PcapReader::get_pkt_count(const std::string& source_ip, uint16_t source_port, const std::string& dest_ip, uint16_t dest_port) {
+    static const std::vector<PacketInfo> empty{};
+    Flow_Endpoints ep = {source_ip, source_port, dest_ip, dest_port};
+    auto element = m_packets_per_source.find(ep);
+    return (element != m_packets_per_source.end())
+        ? element->second.size()
+        : 0;
 }
 

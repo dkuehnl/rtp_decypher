@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -33,7 +33,7 @@
         <attribute name="title">
          <string>RTP</string>
         </attribute>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>10</x>
@@ -205,12 +205,18 @@
               <item>
                <widget class="QLabel" name="label_2">
                 <property name="text">
-                 <string>Select Connection</string>
+                 <string>Select UDP Connection</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QTableWidget" name="table_connections">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+                </property>
+                <property name="selectionBehavior">
+                 <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+                </property>
                 <attribute name="horizontalHeaderCascadingSectionResizes">
                  <bool>true</bool>
                 </attribute>
@@ -347,6 +353,12 @@
          <width>50</width>
          <height>0</height>
         </size>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
        </property>
       </widget>
      </item>

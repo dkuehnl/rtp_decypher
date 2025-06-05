@@ -1,14 +1,25 @@
 #include "rtpparser.h"
+#include <QDebug>
 
 bool RtpParser::is_rtp(const uint8_t* udp_data, size_t udp_length, size_t offset) {
     if (udp_length < offset + 12) return false;
+/*
+    qDebug() << "First 8 bytes of udp_data:";
+    QString hexDump;
+    for (size_t i = 0; i < udp_length; ++i) {
+        // Byte in zwei Hex-Ziffern umwandeln und immer groß-schreiben, z. B. "0A", "FF" usw.
+        hexDump += QString("%1 ").arg(udp_data[i], 2, 16, QLatin1Char('0')).toUpper();
+    }
+    qDebug() << hexDump;*/
+
     uint8_t version = (udp_data[offset] >> 6) & 0x03;
+
     return version == 2;
 }
 
 RtpLayer RtpParser::parse_rtp(const uint8_t* udp_data, size_t udp_length, size_t offset) {
     if (!is_rtp(udp_data, udp_length, offset)) return {};
-
+    qDebug() << "RTP";
     RtpLayer layer{};
     layer.version = (udp_data[offset] >> 6) & 0x03;
     layer.payload_type = udp_data[offset + 1] & 0x7F;
