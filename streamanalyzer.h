@@ -23,6 +23,7 @@ public:
     SequenceStat analyse_sequence(uint32_t ssrc);
 
     std::vector<RtpLayer> get_rtp_stream(uint32_t ssrc);
+    size_t get_rtp_per_ssrc(uint32_t ssrc);
 
 private:
     std::vector<PacketInfo> m_stream;

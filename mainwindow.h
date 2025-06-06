@@ -24,12 +24,14 @@ private:
     std::unique_ptr<PcapReader> m_pcap_reader;
     std::unique_ptr<StreamAnalyzer> m_stream_analyzer;
 
-    void fileview_doubleclicked(const QModelIndex& index);
-    void connection_doubleClick(const QModelIndex& index);
+    void fileview_doubleClicked(const QModelIndex& index);
+    void connection_doubleClicked(const QModelIndex& index);
+    void ssrc_doubleClicked(const QModelIndex& index);
     Flow_Endpoints find_selected_connection(const QModelIndex& index);
 
     void display_parsed_rtp_streams();
     void display_pcap();
+    void display_analyzed_stream(uint32_t ssrc);
 
 private slots:
     void on_btn_analyse_clicked();

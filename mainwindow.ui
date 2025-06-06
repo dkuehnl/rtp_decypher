@@ -68,7 +68,11 @@
                </widget>
               </item>
               <item>
-               <widget class="QListWidget" name="list_rtp_analysis"/>
+               <widget class="QTreeWidget" name="tw_stream_results">
+                <attribute name="headerVisible">
+                 <bool>false</bool>
+                </attribute>
+               </widget>
               </item>
              </layout>
             </item>
@@ -88,6 +92,12 @@
                   <width>0</width>
                   <height>300</height>
                  </size>
+                </property>
+                <property name="editTriggers">
+                 <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+                </property>
+                <property name="selectionBehavior">
+                 <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
                 </property>
                </widget>
               </item>

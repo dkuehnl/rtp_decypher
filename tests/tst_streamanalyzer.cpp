@@ -100,6 +100,7 @@ private slots:
     void test_check_sequence();
     void test_check_brocken_sequence();
     void test_rollover();
+    void test_get_rtp_per_ssrc();
 };
 
 void TestStreamAnalyzer::test_get_rtp_codecs() {
@@ -166,6 +167,14 @@ void TestStreamAnalyzer::test_rollover() {
     QCOMPARE(stat.seq_break, false);
     QCOMPARE(stat.expected_pkt, 30);
     QCOMPARE(stat.actual_pkt, 30);
+}
+
+void TestStreamAnalyzer::test_get_rtp_per_ssrc() {
+    auto stream = make_dummy_rtp_stream(50);
+    StreamAnalyzer sa(stream);
+
+    size_t count = sa.get_rtp_per_ssrc(0xDEADBEEF);
+    QCOMPARE(count, 50);
 }
 
 QTEST_APPLESS_MAIN(TestStreamAnalyzer)

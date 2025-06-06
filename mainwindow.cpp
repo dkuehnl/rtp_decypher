@@ -11,8 +11,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     FileUtils::initialize_fileview(ui->tw_filesystem);
 
-    connect(ui->tw_filesystem, &QTreeView::doubleClicked, this, &MainWindow::fileview_doubleclicked);
-    connect(ui->table_connections, &QTableWidget::doubleClicked, this, &MainWindow::connection_doubleClick);
+    connect(ui->tw_filesystem, &QTreeView::doubleClicked, this, &MainWindow::fileview_doubleClicked);
+    connect(ui->table_connections, &QTableWidget::doubleClicked, this, &MainWindow::connection_doubleClicked);
+    connect(ui->table_rtp_in_connect, &QTableWidget::doubleClicked, this, &MainWindow::ssrc_doubleClicked);
 }
 
 MainWindow::~MainWindow()
@@ -22,11 +23,23 @@ MainWindow::~MainWindow()
 
 //Buttons:
 void MainWindow::on_btn_analyse_clicked() {
-    qDebug() << "btn Analyse";
+    QList<QTableWidgetItem*> selected_items = ui->table_rtp_in_connect->selectedItems();
+    if (selected_items.isEmpty()) {
+        QMessageBox::warning(this, "No Stream selected", "You have to select a Stream befor you can analyze it.");
+        return;
+    }
+
+    QString ssrc_text = selected_items.first()->text();
+    uint32_t ssrc = static_cast<uint32_t>(ssrc_text.toUInt(nullptr,16));
+    MainWindow::display_analyzed_stream(ssrc);
 }
 
 void MainWindow::on_btn_reset_clicked() {
-    qDebug() << "btn Reset";
+    ui->table_rtp_in_connect->clear();
+    ui->table_rtp_in_connect->setColumnCount(0);
+    ui->table_rtp_in_connect->setRowCount(0);
+
+    ui->tw_stream_results->clear();
 
 }
 
@@ -45,7 +58,8 @@ void MainWindow::on_btn_clear_clicked() {
 
 }
 
-void MainWindow::fileview_doubleclicked(const QModelIndex& index) {
+//DoubleClick-Connects:
+void MainWindow::fileview_doubleClicked(const QModelIndex& index) {
     if (!index.isValid()) return;
 
     QString file = FileUtils::get_filepath(ui->tw_filesystem, index);
@@ -60,6 +74,27 @@ void MainWindow::fileview_doubleclicked(const QModelIndex& index) {
     MainWindow::display_pcap();
 }
 
+void MainWindow::connection_doubleClicked(const QModelIndex& index) {
+    if (!index.isValid()) return;
+
+    Flow_Endpoints selected_ep = MainWindow::find_selected_connection(index);
+    std::vector<PacketInfo> selected_stream = m_pcap_reader->get_stream(selected_ep);
+
+    m_stream_analyzer = std::make_unique<StreamAnalyzer>(selected_stream);
+    ui->table_rtp_in_connect->clearContents();
+    MainWindow::display_parsed_rtp_streams();
+}
+
+void MainWindow::ssrc_doubleClicked(const QModelIndex& index) {
+    if (!index.isValid()) return;
+
+    uint32_t ssrc = static_cast<uint32_t>(
+        ui->table_rtp_in_connect->item(index.row(), 0)->text().toUInt(nullptr,16)
+        );
+    MainWindow::display_analyzed_stream(ssrc);
+}
+
+//Display-Functions:
 void MainWindow::display_pcap() {
     m_pcap_reader = std::make_unique<PcapReader>(m_selected_file);
 
@@ -77,16 +112,6 @@ void MainWindow::display_pcap() {
     }
 }
 
-void MainWindow::connection_doubleClick(const QModelIndex& index) {
-    if (!index.isValid()) return;
-
-    Flow_Endpoints selected_ep = MainWindow::find_selected_connection(index);
-    std::vector<PacketInfo> selected_stream = m_pcap_reader->get_stream(selected_ep);
-
-    m_stream_analyzer = std::make_unique<StreamAnalyzer>(selected_stream);
-    MainWindow::display_parsed_rtp_streams();
-}
-
 Flow_Endpoints MainWindow::find_selected_connection(const QModelIndex& index) {
     int row = index.row();
     return {
@@ -99,12 +124,36 @@ Flow_Endpoints MainWindow::find_selected_connection(const QModelIndex& index) {
 
 void MainWindow::display_parsed_rtp_streams() {
     QList<uint32_t> ssrc = m_stream_analyzer->get_ssrcs();
-    qDebug() << ssrc.size();
+
     ui->table_rtp_in_connect->setRowCount(ssrc.size());
-    ui->table_rtp_in_connect->setColumnCount(1);
+    ui->table_rtp_in_connect->setColumnCount(2);
+    ui->table_rtp_in_connect->setHorizontalHeaderLabels(QStringList({"SSRC", "Packets"}));
+
     for (int row = 0; row < ssrc.size(); row++) {
         QString hex_value = QString("%1").arg(ssrc[row], 8, 16, QLatin1Char('0')).toUpper();
         hex_value = "0x" + hex_value;
         ui->table_rtp_in_connect->setItem(row, 0, new QTableWidgetItem(hex_value));
+        size_t count = m_stream_analyzer->get_rtp_per_ssrc(ssrc[row]);
+        ui->table_rtp_in_connect->setItem(row, 1, new QTableWidgetItem(QString::number(count)));
     }
+}
+
+void MainWindow::display_analyzed_stream(uint32_t ssrc) {
+    SequenceStat stream = m_stream_analyzer->analyse_sequence(ssrc);
+    QString seq_break = stream.seq_break ? "Yes" : "No";
+
+    QString hex_value = QString("%1").arg(ssrc, 8, 16, QLatin1Char('0')).toUpper();
+    hex_value = "0x" + hex_value;
+
+    QTreeWidgetItem* root = new QTreeWidgetItem(ui->tw_stream_results);
+    root->setText(0, hex_value);
+
+    QTreeWidgetItem* exp_pkt = new QTreeWidgetItem(root);
+    exp_pkt->setText(0, "Expected Packets: " + QString::number(stream.expected_pkt));
+    QTreeWidgetItem* act_pkt = new QTreeWidgetItem(root);
+    act_pkt->setText(0, "Actual Items: " + QString::number(stream.actual_pkt));
+    QTreeWidgetItem* seq_brk = new QTreeWidgetItem(root);
+    seq_brk->setText(0, "Sequenze-Break detect: " + seq_break);
+    QTreeWidgetItem* rollover = new QTreeWidgetItem(root);
+    rollover->setText(0, "Detected Rollover: " + QString::number(stream.rollover));
 }
