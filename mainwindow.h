@@ -29,8 +29,8 @@ private:
     void ssrc_doubleClicked(const QModelIndex& index);
     Flow_Endpoints find_selected_connection(const QModelIndex& index);
 
-    void display_parsed_rtp_streams();
     void display_pcap();
+    void display_parsed_rtp_streams(Flow_Endpoints ep);
     void display_analyzed_stream(uint32_t ssrc);
 
 private slots:
@@ -39,6 +39,7 @@ private slots:
     void on_btn_decypher_clicked();
     void on_btn_exit_clicked();
     void on_btn_clear_clicked();
+    void on_rb_enable_offset_toggled();
 };
 
 #endif // MAINWINDOW_H

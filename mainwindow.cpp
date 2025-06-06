@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->tw_filesystem, &QTreeView::doubleClicked, this, &MainWindow::fileview_doubleClicked);
     connect(ui->table_connections, &QTableWidget::doubleClicked, this, &MainWindow::connection_doubleClicked);
-    connect(ui->table_rtp_in_connect, &QTableWidget::doubleClicked, this, &MainWindow::ssrc_doubleClicked);
+    connect(ui->tw_stream_per_connect, &QTreeWidget::doubleClicked, this, &MainWindow::ssrc_doubleClicked);
 }
 
 MainWindow::~MainWindow()
@@ -23,22 +23,18 @@ MainWindow::~MainWindow()
 
 //Buttons:
 void MainWindow::on_btn_analyse_clicked() {
-    QList<QTableWidgetItem*> selected_items = ui->table_rtp_in_connect->selectedItems();
+    QList<QTreeWidgetItem*> selected_items = ui->tw_stream_per_connect->selectedItems();
+
     if (selected_items.isEmpty()) {
         QMessageBox::warning(this, "No Stream selected", "You have to select a Stream befor you can analyze it.");
         return;
     }
-
-    QString ssrc_text = selected_items.first()->text();
-    uint32_t ssrc = static_cast<uint32_t>(ssrc_text.toUInt(nullptr,16));
+    uint32_t ssrc = static_cast<uint32_t>(selected_items.first()->text(0).toUInt(nullptr, 16));
     MainWindow::display_analyzed_stream(ssrc);
 }
 
 void MainWindow::on_btn_reset_clicked() {
-    ui->table_rtp_in_connect->clear();
-    ui->table_rtp_in_connect->setColumnCount(0);
-    ui->table_rtp_in_connect->setRowCount(0);
-
+    ui->tw_stream_per_connect->clear();
     ui->tw_stream_results->clear();
 
 }
@@ -49,13 +45,20 @@ void MainWindow::on_btn_decypher_clicked() {
 }
 
 void MainWindow::on_btn_exit_clicked() {
-    qDebug() << "btn Exit";
-
+    qApp->quit();
 }
 
 void MainWindow::on_btn_clear_clicked() {
     qDebug() << "btn Clear";
 
+}
+
+void MainWindow::on_rb_enable_offset_toggled() {
+    if (ui->rb_enable_offset->isChecked()) {
+        ui->spinner_offset->setEnabled(true);
+    } else {
+        ui->spinner_offset->setEnabled(false);
+    }
 }
 
 //DoubleClick-Connects:
@@ -80,18 +83,26 @@ void MainWindow::connection_doubleClicked(const QModelIndex& index) {
     Flow_Endpoints selected_ep = MainWindow::find_selected_connection(index);
     std::vector<PacketInfo> selected_stream = m_pcap_reader->get_stream(selected_ep);
 
-    m_stream_analyzer = std::make_unique<StreamAnalyzer>(selected_stream);
-    ui->table_rtp_in_connect->clearContents();
-    MainWindow::display_parsed_rtp_streams();
+    size_t offset = 0;
+    if (ui->rb_enable_offset->isEnabled()) {
+        offset = static_cast<size_t>(ui->spinner_offset->value());
+    }
+
+    m_stream_analyzer = std::make_unique<StreamAnalyzer>(selected_stream, offset);
+    MainWindow::display_parsed_rtp_streams(selected_ep);
 }
 
 void MainWindow::ssrc_doubleClicked(const QModelIndex& index) {
     if (!index.isValid()) return;
 
-    uint32_t ssrc = static_cast<uint32_t>(
-        ui->table_rtp_in_connect->item(index.row(), 0)->text().toUInt(nullptr,16)
-        );
-    MainWindow::display_analyzed_stream(ssrc);
+    QModelIndex parent_index = index.parent();
+    if (parent_index.isValid()) {
+        qDebug() << "es gibt ein Parent";
+    } else {
+        QTreeWidgetItem* item = ui->tw_stream_per_connect->itemFromIndex(index);
+        uint32_t ssrc = static_cast<uint32_t>(item->text(0).toUInt(nullptr, 16));
+        MainWindow::display_analyzed_stream(ssrc);
+    }
 }
 
 //Display-Functions:
@@ -122,19 +133,27 @@ Flow_Endpoints MainWindow::find_selected_connection(const QModelIndex& index) {
     };
 }
 
-void MainWindow::display_parsed_rtp_streams() {
+void MainWindow::display_parsed_rtp_streams(Flow_Endpoints ep) {
     QList<uint32_t> ssrc = m_stream_analyzer->get_ssrcs();
 
-    ui->table_rtp_in_connect->setRowCount(ssrc.size());
-    ui->table_rtp_in_connect->setColumnCount(2);
-    ui->table_rtp_in_connect->setHorizontalHeaderLabels(QStringList({"SSRC", "Packets"}));
-
-    for (int row = 0; row < ssrc.size(); row++) {
-        QString hex_value = QString("%1").arg(ssrc[row], 8, 16, QLatin1Char('0')).toUpper();
+    for (int i = 0; i < ssrc.size(); i++) {
+        QTreeWidgetItem* root = new QTreeWidgetItem(ui->tw_stream_per_connect);
+        QString hex_value = QString("%1").arg(ssrc[i], 8, 16, QLatin1Char('0')).toUpper();
         hex_value = "0x" + hex_value;
-        ui->table_rtp_in_connect->setItem(row, 0, new QTableWidgetItem(hex_value));
-        size_t count = m_stream_analyzer->get_rtp_per_ssrc(ssrc[row]);
-        ui->table_rtp_in_connect->setItem(row, 1, new QTableWidgetItem(QString::number(count)));
+        root->setText(0, hex_value);
+
+        QTreeWidgetItem* endp_child = new QTreeWidgetItem(root);
+        QString ep_value =
+            QString::fromStdString(ep.source_ip) + ":"
+            + QString::number(ep.source_port) + "<->"
+            + QString::fromStdString(ep.destination_ip) + ":"
+            + QString::number(ep.destination_port);
+        endp_child->setText(0, ep_value);
+
+        size_t count = m_stream_analyzer->get_rtp_per_ssrc(ssrc[i]);
+        QTreeWidgetItem* count_child = new QTreeWidgetItem(root);
+        QString c_value = "Pakets: " + QString::number(count);
+        count_child->setText(0, c_value);
     }
 }
 
@@ -156,4 +175,6 @@ void MainWindow::display_analyzed_stream(uint32_t ssrc) {
     seq_brk->setText(0, "Sequenze-Break detect: " + seq_break);
     QTreeWidgetItem* rollover = new QTreeWidgetItem(root);
     rollover->setText(0, "Detected Rollover: " + QString::number(stream.rollover));
+
+    ui->tw_stream_results->expandAll();
 }

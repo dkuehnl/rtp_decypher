@@ -1,8 +1,8 @@
 #include "streamanalyzer.h"
 #include <qdebug.h>
 
-StreamAnalyzer::StreamAnalyzer(const std::vector<PacketInfo>& stream)
-    : m_stream(stream)
+StreamAnalyzer::StreamAnalyzer(const std::vector<PacketInfo>& stream, size_t offset)
+    : m_stream(stream), m_offset(offset)
 {
     if(m_stream.empty()) {
         return;

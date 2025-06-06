@@ -17,7 +17,7 @@ struct SequenceStat {
 class StreamAnalyzer
 {
 public:
-    StreamAnalyzer(const std::vector<PacketInfo>& stream);
+    StreamAnalyzer(const std::vector<PacketInfo>& stream, size_t offset = 0);
     const QList<uint8_t>& get_codecs();
     QList<uint32_t> get_ssrcs();
     SequenceStat analyse_sequence(uint32_t ssrc);
@@ -29,7 +29,7 @@ private:
     std::vector<PacketInfo> m_stream;
     std::map<uint32_t, std::vector<RtpLayer>> m_rtp_stream;
     QList<uint8_t> m_codecs{};
-    size_t m_offset = 0;
+    size_t m_offset;
 
     void parse_stream();
 };
