@@ -101,6 +101,7 @@ private slots:
     void test_check_brocken_sequence();
     void test_rollover();
     void test_get_rtp_per_ssrc();
+    void test_payload_size();
 };
 
 void TestStreamAnalyzer::test_get_rtp_codecs() {

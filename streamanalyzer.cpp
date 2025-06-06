@@ -36,7 +36,6 @@ QList<uint32_t> StreamAnalyzer::get_ssrcs() {
 SequenceStat StreamAnalyzer::analyse_sequence(uint32_t ssrc) {
     uint16_t prev_seq;
     SequenceStat stat;
-    qDebug() << "SSRC: " << ssrc;
 
     auto key = m_rtp_stream.find(ssrc);
     if (key != m_rtp_stream.end() && !key->second.empty()) {
@@ -67,8 +66,6 @@ SequenceStat StreamAnalyzer::analyse_sequence(uint32_t ssrc) {
 
         stat.expected_pkt = raw_diff + 1;
     }
-    qDebug() << "SSRC nicht gefunden";
-
     return stat;
 }
 
