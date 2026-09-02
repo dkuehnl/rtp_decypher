@@ -1,5 +1,5 @@
 #include <QtTest>
-#include "../rtpparser.h"
+#include "../src/core/rtpparser.h"
 
 #include "pcapplusplus/PcapFileDevice.h"
 #include "pcapplusplus/Packet.h"

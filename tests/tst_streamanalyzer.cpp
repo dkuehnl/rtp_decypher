@@ -1,6 +1,6 @@
 #include <QtTest>
 #include <winsock2.h>
-#include "../streamanalyzer.h"
+#include "../src/core/streamanalyzer.h"
 
 static std::vector<uint8_t> make_valid_rtp_payload(uint16_t sequence_number = 1234,
                                                    uint32_t timestamp = 1,

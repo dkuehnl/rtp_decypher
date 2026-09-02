@@ -1,5 +1,5 @@
 #include <QtTest>
-#include "../pcapreader.h"
+#include "../src/core/pcapreader.h"
 
 class TestPcapReader : public QObject
 {

@@ -40,6 +40,9 @@ void MainWindow::on_btn_reset_clicked() {
 }
 
 void MainWindow::on_btn_decypher_clicked() {
+    // TODO: Not implemented yet -- this is currently a no-op stub. The
+    // button exists to decrypt/decode the payload of the currently
+    // analysed stream, but no decyphering logic has been wired up here.
     qDebug() << "btn Decypher";
 
 }
@@ -49,6 +52,9 @@ void MainWindow::on_btn_exit_clicked() {
 }
 
 void MainWindow::on_btn_clear_clicked() {
+    // TODO: Not implemented yet -- this is currently a no-op stub. Unlike
+    // on_btn_reset_clicked() (which clears the stream/result trees), this
+    // button has no defined behaviour implemented.
     qDebug() << "btn Clear";
 
 }
@@ -84,6 +90,13 @@ void MainWindow::connection_doubleClicked(const QModelIndex& index) {
     std::vector<PacketInfo> selected_stream = m_pcap_reader->get_stream(selected_ep);
 
     size_t offset = 0;
+    // TODO: This checks rb_enable_offset->isEnabled() (whether the radio
+    // button widget itself is interactable, which is always true here) but
+    // should check rb_enable_offset->isChecked() -- i.e. whether the user
+    // actually enabled the payload offset. Since spinner_offset stays
+    // disabled (and thus at its default value) until the radio button is
+    // checked, this happens to behave correctly today, but the condition
+    // itself does not express the intended check.
     if (ui->rb_enable_offset->isEnabled()) {
         offset = static_cast<size_t>(ui->spinner_offset->value());
     }
@@ -97,6 +110,11 @@ void MainWindow::ssrc_doubleClicked(const QModelIndex& index) {
 
     QModelIndex parent_index = index.parent();
     if (parent_index.isValid()) {
+        // TODO: Double-clicking a child row (endpoint/packet-count detail
+        // item) under an SSRC entry only logs a debug message and does
+        // nothing else. Either handle it explicitly or, if child rows
+        // aren't meant to be interactive, disable selection/expansion on
+        // them instead of silently no-op'ing here.
         qDebug() << "es gibt ein Parent";
     } else {
         QTreeWidgetItem* item = ui->tw_stream_per_connect->itemFromIndex(index);
@@ -119,6 +137,10 @@ void MainWindow::display_pcap() {
         ui->table_connections->setItem(row, 1, new QTableWidgetItem(QString::number(row_data.source_port)));
         ui->table_connections->setItem(row, 2, new QTableWidgetItem(QString::fromStdString(row_data.destination_ip)));
         ui->table_connections->setItem(row, 3, new QTableWidgetItem(QString::number(row_data.destination_port)));
+        // TODO: Column 4 ("Protocol" in the table header, see mainwindow.ui)
+        // is never populated -- only columns 0-3 and 5 are set below. Either
+        // fill it in (e.g. "UDP", or the detected RTP payload type once
+        // known) or remove the column from the UI.
         ui->table_connections->setItem(row, 5, new QTableWidgetItem(QString::number(pkt_count)));
     }
 }
