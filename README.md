@@ -2,6 +2,8 @@
 
 A Windows desktop tool for inspecting RTP traffic captured in `.pcap` files — browse a capture's UDP flows, parse the RTP packets within a chosen flow, and check sequence-number continuity per SSRC.
 
+> **Status: under active development.** Core flow/SSRC/sequence analysis works, but some features are incomplete or not yet implemented (e.g. RTP payload decyphering) — see the `// TODO:` comments throughout `src/` for the current state.
+
 ---
 
 ## Why RTP-Decypher?
